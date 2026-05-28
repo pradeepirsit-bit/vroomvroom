@@ -53,51 +53,69 @@
         }
 
         h1 { margin: 0 0 5px 0; color: var(--primary); font-size: 2.5rem; font-weight: 900; font-style: italic; letter-spacing: -1px; }
-        .tagline { color: #aaaaaa; font-size: 1.05rem; font-weight: 600; margin-bottom: 20px; }
+        .tagline { color: #aaaaaa; font-size: 1rem; font-weight: 600; margin-bottom: 20px; }
 
+        /* MODE TABS */
         .mode-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
-        
-        button {
-            border: none; border-radius: 50px; padding: 12px 20px;
-            font-size: 1rem; font-weight: bold; cursor: pointer;
-            transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;
+        .mode-tab {
+            background: #222; border: 2px solid transparent; border-radius: 12px; padding: 10px 20px;
+            font-size: 1rem; font-weight: bold; color: #888; cursor: pointer; transition: all 0.3s ease;
         }
+        .mode-tab.active { background: #333; color: white; border-color: var(--primary); }
+        .mode-tab:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        #single-btn { background: linear-gradient(145deg, #ff5722, #e63e00); color: white; box-shadow: 0 8px 20px rgba(255, 69, 0, 0.4); }
-        #battle-btn { background: linear-gradient(145deg, #009ce6, #0077b3); color: white; box-shadow: 0 8px 20px rgba(0, 191, 255, 0.4); }
-        #dir-btn { background: #333; color: white; margin-top: 10px; border: 1px solid #555; }
+        /* RECORD BUTTONS */
+        .action-btn {
+            border: none; border-radius: 50px; padding: 12px 20px; font-size: 1rem; font-weight: bold; 
+            cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+        }
+        #solo-record-btn { background: linear-gradient(145deg, #ff5722, #e63e00); color: white; box-shadow: 0 8px 20px rgba(255, 69, 0, 0.4); margin: 10px 0; width: 80%;}
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn.recording { background: #dc143c !important; pointer-events: none; animation: pulse 1s infinite alternate; box-shadow: none !important; border: 2px solid white;}
+        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(100%); transform: none; box-shadow: none; }
 
-        button:active { transform: scale(0.95); }
-        button.recording { background: #dc143c !important; pointer-events: none; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 1; transform: scale(1); } to { opacity: 0.8; transform: scale(0.98); } }
 
-        @keyframes pulse { from { opacity: 1; } to { opacity: 0.7; } }
-
-        /* LIVE RPM BOOST METER */
-        .boost-container { display: none; width: 100%; margin-top: 15px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; border: 1px solid #333; box-sizing: border-box; }
+        /* LIVE BOOST METER (SHARED) */
+        .boost-container { display: none; width: 100%; margin: 15px 0; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; border: 1px solid #333; box-sizing: border-box; }
         .boost-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 2px; }
         .boost-bar-bg { width: 100%; height: 25px; background: #222; border-radius: 12px; overflow: hidden; position: relative; }
         .boost-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff7f, #ffeb3b, #ff4500); transition: width 0.05s ease-out; }
-        
         .progress-container { width: 100%; height: 4px; background: #222; margin-top: 10px; border-radius: 2px; overflow: hidden; }
         .progress-bar { height: 100%; width: 0%; background: #fff; transition: width 0.1s linear; }
 
-        .results { display: none; animation: slideUp 0.5s ease-out forwards; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px;}
-        
+        /* SOLO RESULTS UI */
+        .results { display: none; animation: slideUp 0.5s ease-out forwards; border-top: 1px solid #333; padding-top: 20px; margin-top: 10px;}
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
         .score-box { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 15px; border: 1px solid #333;}
         .score-display { font-size: 4rem; font-weight: 900; color: var(--accent); margin: 5px 0; line-height: 1; text-shadow: 0 0 20px rgba(0,255,127,0.4); }
-        
-        .bike-badge { display: inline-block; padding: 6px 12px; border-radius: 8px; background: #222; font-weight: bold; margin: 10px 0; border-left: 4px solid var(--primary); }
+        .bike-badge { display: inline-block; padding: 6px 12px; border-radius: 8px; background: #222; font-weight: bold; margin: 10px 0; border-left: 4px solid var(--primary); font-size: 0.9rem;}
         .trash-talk { font-size: 1.1rem; font-style: italic; background: rgba(255,69,0,0.1); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--primary); color: #fff; }
 
-        /* DIRECTORY (GARAGE) STYLES */
-        .directory-container { display: none; width: 90%; max-width: 500px; background: var(--secondary); padding: 1.5rem; border-radius: 20px; border: 1px solid #333; }
+        /* --- NEW: BATTLE ARENA UI --- */
+        .battle-arena { display: none; margin-top: 15px; animation: slideUp 0.3s ease-out; }
+        .battle-grid { display: flex; gap: 10px; justify-content: center; }
+        .fighter-card { background: rgba(0,0,0,0.6); border: 2px solid #333; border-radius: 12px; padding: 15px; flex: 1; transition: all 0.3s; position: relative; }
+        .fighter-card.active-turn { border-color: var(--battle); box-shadow: 0 0 15px rgba(0, 191, 255, 0.2); }
+        .fighter-card.winner { border-color: gold; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); background: rgba(255,215,0,0.05); }
+        .fighter-card.loser { opacity: 0.6; }
+        
+        .f-title { font-size: 0.9rem; color: #aaa; text-transform: uppercase; margin-bottom: 10px; font-weight: bold; }
+        .f-score { font-size: 3rem; font-weight: 900; color: #fff; margin: 10px 0; transition: color 0.3s; }
+        .fighter-card.winner .f-score { color: gold; }
+        .battle-btn { width: 100%; padding: 10px; font-size: 0.9rem; background: linear-gradient(145deg, #009ce6, #0077b3); color: white; border-radius: 8px; }
+        
+        .battle-winner-banner { font-size: 1.5rem; color: gold; font-weight: 900; text-transform: uppercase; margin: 20px 0 10px 0; display: none; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        
+        /* DIRECTORY */
+        #dir-btn { background: #333; color: white; margin-top: 10px; border: 1px solid #555; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-weight: bold;}
+        .directory-container { display: none; width: 90%; max-width: 500px; background: var(--secondary); padding: 1.5rem; border-radius: 20px; border: 1px solid #333; margin-top: 15px; }
         .history-item { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--primary); }
+        .history-item.battle-hist { border-left-color: var(--battle); }
         .h-score { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
         .h-details { text-align: left; font-size: 0.9rem; color: #ccc; }
         .h-date { font-size: 0.7rem; color: #777; }
-        #clear-dir { background: transparent; color: #ff4500; font-size: 0.8rem; border: 1px solid #ff4500; padding: 5px 10px; margin-top: 10px;}
+        #clear-dir { background: transparent; color: #ff4500; font-size: 0.8rem; border: 1px solid #ff4500; padding: 5px 10px; margin-top: 10px; cursor: pointer; border-radius: 5px;}
 
         #status { color: #888; font-size: 0.95rem; font-weight: 500; height: 20px; margin-bottom: 5px;}
     </style>
@@ -109,13 +127,12 @@
         <p class="tagline">Engine sound-ா? Mixer grinder sound-ா?</p>
         
         <div class="mode-buttons">
-            <button id="single-btn">🎤 Solo Rev</button>
-            <button id="battle-btn">⚔️ 1v1 Battle</button>
+            <button class="mode-tab active" id="tab-solo">🎤 Solo Rev</button>
+            <button class="mode-tab" id="tab-battle">⚔️ 1v1 Battle</button>
         </div>
 
-        <div id="status">Ready to test.</div>
+        <div id="status">Select a mode to begin.</div>
 
-        <!-- LIVE BOOST VISUALIZER -->
         <div class="boost-container" id="boost-container">
             <div class="boost-label">Exhaust Boost Level 🚀</div>
             <div class="boost-bar-bg">
@@ -126,20 +143,44 @@
             </div>
         </div>
 
-        <!-- Solo Results -->
-        <div class="results" id="single-results-card">
-            <div class="score-box">
-                <div style="font-size: 0.85rem; color:#aaa; text-transform:uppercase;">Final Roar Score</div>
-                <div class="score-display" id="solo-score">0</div>
+        <div id="solo-section">
+            <button class="action-btn" id="solo-record-btn">🎤 Tap to Rev!</button>
+            
+            <div class="results" id="solo-results-card">
+                <div class="score-box">
+                    <div style="font-size: 0.85rem; color:#aaa; text-transform:uppercase;">Final Roar Score</div>
+                    <div class="score-display" id="solo-score">0</div>
+                </div>
+                <div><span class="bike-badge" id="solo-class">Analyzing...</span></div>
+                <div class="trash-talk" id="solo-trash-talk"></div>
             </div>
-            <div><span class="bike-badge" id="solo-class">Analyzing...</span></div>
-            <div class="trash-talk" id="solo-trash-talk"></div>
+        </div>
+
+        <div class="battle-arena" id="battle-section">
+            <div class="battle-grid">
+                <div class="fighter-card active-turn" id="card-v1">
+                    <div class="f-title">Vandi 1</div>
+                    <button class="action-btn battle-btn" id="btn-v1">🎤 Record V1</button>
+                    <div class="f-score" id="score-v1">--</div>
+                    <div class="bike-badge" id="class-v1" style="display:none;"></div>
+                </div>
+                <div class="fighter-card" id="card-v2">
+                    <div class="f-title">Vandi 2</div>
+                    <button class="action-btn battle-btn" id="btn-v2" disabled>🔒 Locked</button>
+                    <div class="f-score" id="score-v2">--</div>
+                    <div class="bike-badge" id="class-v2" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="battle-winner-banner" id="battle-winner"></div>
+            <div class="trash-talk" id="battle-trash-talk" style="display: none;"></div>
+            
+            <button class="action-btn" id="btn-reset-battle" style="display:none; margin-top:15px; width:100%; background:#333; color:white;">⚔️ Start New Battle</button>
         </div>
     </div>
 
-    <button id="dir-btn">📂 Open Roar Directory</button>
+    <button id="dir-btn">📂 Open Garage Directory</button>
 
-    <!-- DIRECTORY OF ROAR -->
     <div class="directory-container" id="directory">
         <h2 style="color:var(--primary); margin-top:0;">Garage History</h2>
         <div id="history-list"></div>
@@ -147,66 +188,96 @@
     </div>
 
     <script>
-        const URL = "https://teachablemachine.withgoogle.com/models/placeholder/"; 
         const RECORD_DURATION_MS = 10000; 
 
         const trashTalkTemplates = {
-            low: ["Enna ba, mixer grinder sound! 😂", "Cycle otlama ba? 🚲"],
-            medium: ["Not bad, innum raw power thevai! 🏍️", "Pulling out okay! 🔥"],
-            high: ["Verithanam! Pure muscle! 💥", "Therikkavidalama! 🦁"]
+            solo: {
+                low: ["Enna ba, mixer grinder sound! 😂", "Cycle otlama ba? 🚲"],
+                medium: ["Not bad, innum raw power thevai! 🏍️", "Pulling out okay! 🔥"],
+                high: ["Verithanam! Pure muscle! 💥", "Therikkavidalama! 🦁"]
+            },
+            battle: {
+                v1Win: ["Vandi 1 thaan Gethu! Vandi 2 silencer waste-u. 🔥", "Vandi 1 Roars, Vandi 2 Meows! 🦁"],
+                v2Win: ["Vandi 2 vera level! Vandi 1 pure waste-u. 💥", "Vandi 2 totally destroyed Vandi 1! Verithanam! 🚀"],
+                tie: ["Rendu perum onnu thaan! Both are beasts. 🤝"]
+            }
         };
 
-        const singleBtn = document.getElementById('single-btn');
-        const battleBtn = document.getElementById('battle-btn');
-        const dirBtn = document.getElementById('dir-btn');
-        const directory = document.getElementById('directory');
-        const historyList = document.getElementById('history-list');
-        const clearDirBtn = document.getElementById('clear-dir');
-
-        const statusText = document.getElementById('status');
-        const boostContainer = document.getElementById('boost-container');
-        const boostFill = document.getElementById('boost-fill');
-        const progressBar = document.getElementById('progress-bar');
-        
-        const singleResultsCard = document.getElementById('single-results-card');
-        const soloScoreEl = document.getElementById('solo-score');
-        const soloClassEl = document.getElementById('solo-class');
-        const soloTrashTalkEl = document.getElementById('solo-trash-talk');
-
+        // UI State
+        let currentMode = 'solo'; // 'solo' or 'battle'
         let isRecording = false;
+        
+        // Battle State
+        let v1Stats = null;
+        let v2Stats = null;
+
+        // Audio Vars
         let audioContext, analyser, microphone, progressInterval;
         let maxVolume = 0;
         let historyData = JSON.parse(localStorage.getItem('roarDirectory')) || [];
 
-        // UI Event Listeners
-        singleBtn.addEventListener('click', () => startPipeline());
+        // DOM Elements
+        const tabSolo = document.getElementById('tab-solo');
+        const tabBattle = document.getElementById('tab-battle');
+        const soloSection = document.getElementById('solo-section');
+        const battleSection = document.getElementById('battle-section');
+        const statusText = document.getElementById('status');
         
-        dirBtn.addEventListener('click', () => {
-            directory.style.display = directory.style.display === 'block' ? 'none' : 'block';
-            renderDirectory();
+        const boostContainer = document.getElementById('boost-container');
+        const boostFill = document.getElementById('boost-fill');
+        const progressBar = document.getElementById('progress-bar');
+
+        const btnSoloRecord = document.getElementById('solo-record-btn');
+        const btnV1 = document.getElementById('btn-v1');
+        const btnV2 = document.getElementById('btn-v2');
+        const btnResetBattle = document.getElementById('btn-reset-battle');
+
+        // Tab Switching Logic
+        tabSolo.addEventListener('click', () => {
+            if(isRecording) return;
+            currentMode = 'solo';
+            tabSolo.classList.add('active'); tabBattle.classList.remove('active');
+            soloSection.style.display = 'block'; battleSection.style.display = 'none';
+            statusText.innerText = 'Ready for Solo Test.';
+            boostContainer.style.display = 'none';
         });
 
-        clearDirBtn.addEventListener('click', () => {
-            localStorage.removeItem('roarDirectory');
-            historyData = [];
-            renderDirectory();
+        tabBattle.addEventListener('click', () => {
+            if(isRecording) return;
+            currentMode = 'battle';
+            tabBattle.classList.add('active'); tabSolo.classList.remove('active');
+            battleSection.style.display = 'block'; soloSection.style.display = 'none';
+            statusText.innerText = 'Battle Mode: Record Vandi 1 first.';
+            boostContainer.style.display = 'none';
         });
 
-        async function startPipeline() {
+        // Recording Triggers
+        btnSoloRecord.addEventListener('click', () => startPipeline('solo', btnSoloRecord));
+        btnV1.addEventListener('click', () => startPipeline('v1', btnV1));
+        btnV2.addEventListener('click', () => startPipeline('v2', btnV2));
+
+        btnResetBattle.addEventListener('click', resetBattleArena);
+
+        async function startPipeline(caller, buttonElement) {
             if (isRecording) return;
             
-            singleResultsCard.style.display = 'none';
+            // Lock UI
+            isRecording = true;
+            tabSolo.disabled = true; tabBattle.disabled = true;
+            
+            // Clean up old results based on caller
+            if(caller === 'solo') document.getElementById('solo-results-card').style.display = 'none';
+            
             statusText.innerText = 'Connecting mic...';
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 setupDecibelTracker(stream);
 
-                isRecording = true;
                 boostContainer.style.display = 'block';
-                singleBtn.classList.add('recording');
-                singleBtn.innerHTML = '🔥 Listening...';
-                statusText.innerText = 'Give it a solid rev, Maapla!';
+                buttonElement.classList.add('recording');
+                buttonElement.innerHTML = '🔥 Listening (10s)';
+                statusText.innerText = caller === 'solo' ? 'Give it a solid rev, Maapla!' : `Recording ${caller.toUpperCase()}... Let it rip!`;
 
                 let elapsed = 0;
                 progressInterval = setInterval(() => {
@@ -214,10 +285,12 @@
                     progressBar.style.width = (elapsed / RECORD_DURATION_MS) * 100 + '%';
                 }, 100);
 
-                setTimeout(() => stopPipeline(stream), RECORD_DURATION_MS);
+                setTimeout(() => stopPipeline(stream, caller, buttonElement), RECORD_DURATION_MS);
 
             } catch (err) {
                 statusText.innerText = "Error: Mic permission denied!";
+                isRecording = false;
+                tabSolo.disabled = false; tabBattle.disabled = false;
             }
         }
 
@@ -236,59 +309,160 @@
                 if (!isRecording) return;
                 analyser.getByteFrequencyData(dataArray);
                 let sum = 0;
-                for (let i = 0; i < bufferLength; i++) { sum += dataArray[i]; }
+                for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
                 let avg = sum / bufferLength;
                 
                 if (avg > maxVolume) maxVolume = avg; 
 
                 // ANIMATE THE BOOST METER
-                // Map average volume (usually 0 to 150 realistically) to a percentage
                 let visualBoost = Math.min(100, (avg / 120) * 100);
                 boostFill.style.width = visualBoost + '%';
-
                 requestAnimationFrame(track);
             }
             track();
         }
 
-        function stopPipeline(stream) {
+        function stopPipeline(stream, caller, buttonElement) {
             isRecording = false;
+            tabSolo.disabled = false; tabBattle.disabled = false;
             clearInterval(progressInterval);
-            singleBtn.classList.remove('recording');
-            singleBtn.innerHTML = '🎤 Solo Rev';
+            
+            buttonElement.classList.remove('recording');
+            if(caller === 'solo') buttonElement.innerHTML = '🎤 Rev Again';
+            if(caller === 'v1') buttonElement.innerHTML = '✅ V1 Done';
+            if(caller === 'v2') buttonElement.innerHTML = '✅ V2 Done';
+
             boostContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            boostFill.style.width = '0%';
 
             stream.getTracks().forEach(track => track.stop());
             if (audioContext && audioContext.state !== 'closed') audioContext.close();
 
-            processRawData();
+            processRawData(caller);
         }
 
-        function processRawData() {
+        function processRawData(caller) {
+            // Generate Score Logic (Mocking AI)
             let baseScore = Math.min(85, Math.round((maxVolume / 255) * 85 * 1.5)); 
             if (baseScore < 10) baseScore = Math.floor(Math.random() * 20) + 10; 
-
-            // Mock AI Bike Detection
             let detectedClass = baseScore > 75 ? "Royal Enfield" : (baseScore > 50 ? "KTM Duke" : "TVS XL");
             let bonus = detectedClass === "Royal Enfield" ? 15 : (detectedClass === "KTM Duke" ? 10 : 2);
             let finalScore = Math.min(100, baseScore + bonus);
 
-            soloScoreEl.innerText = finalScore;
-            soloClassEl.innerText = `${detectedClass} (+${bonus} Bonus)`;
-            
-            let category = finalScore > 75 ? 'high' : (finalScore > 40 ? 'medium' : 'low');
-            soloTrashTalkEl.innerText = trashTalkTemplates[category][Math.floor(Math.random() * trashTalkTemplates[category].length)];
+            const resultObj = { score: finalScore, bike: detectedClass };
 
-            singleResultsCard.style.display = 'block';
-            statusText.innerText = 'Score calculated!';
-
-            saveToDirectory(finalScore, detectedClass);
+            if (caller === 'solo') {
+                document.getElementById('solo-score').innerText = finalScore;
+                document.getElementById('solo-class').innerText = `${detectedClass} (+${bonus})`;
+                let cat = finalScore > 75 ? 'high' : (finalScore > 40 ? 'medium' : 'low');
+                document.getElementById('solo-trash-talk').innerText = trashTalkTemplates.solo[cat][Math.floor(Math.random() * 2)];
+                document.getElementById('solo-results-card').style.display = 'block';
+                
+                saveToDirectory(finalScore, detectedClass, 'Solo');
+                statusText.innerText = 'Score calculated!';
+            } 
+            else if (caller === 'v1') {
+                v1Stats = resultObj;
+                document.getElementById('score-v1').innerText = finalScore;
+                let c1 = document.getElementById('class-v1'); c1.innerText = detectedClass; c1.style.display = 'inline-block';
+                
+                // Switch Turns
+                document.getElementById('card-v1').classList.remove('active-turn');
+                document.getElementById('card-v2').classList.add('active-turn');
+                btnV1.disabled = true;
+                btnV2.disabled = false;
+                btnV2.innerHTML = '🎤 Record V2';
+                
+                statusText.innerText = 'V1 Locked. Now record Vandi 2!';
+            }
+            else if (caller === 'v2') {
+                v2Stats = resultObj;
+                document.getElementById('score-v2').innerText = finalScore;
+                let c2 = document.getElementById('class-v2'); c2.innerText = detectedClass; c2.style.display = 'inline-block';
+                
+                btnV2.disabled = true;
+                document.getElementById('card-v2').classList.remove('active-turn');
+                
+                calculateBattleWinner();
+            }
         }
 
-        function saveToDirectory(score, bike) {
+        function calculateBattleWinner() {
+            const banner = document.getElementById('battle-winner');
+            const talk = document.getElementById('battle-trash-talk');
+            const c1 = document.getElementById('card-v1');
+            const c2 = document.getElementById('card-v2');
+
+            let winnerText = "";
+            let historyText = "";
+
+            if (v1Stats.score > v2Stats.score) {
+                banner.innerText = '🏆 Vandi 1 Wins!';
+                talk.innerText = trashTalkTemplates.battle.v1Win[Math.floor(Math.random() * 2)];
+                c1.classList.add('winner'); c2.classList.add('loser');
+                historyText = `Battle: V1(${v1Stats.score}) beat V2(${v2Stats.score})`;
+            } else if (v2Stats.score > v1Stats.score) {
+                banner.innerText = '🏆 Vandi 2 Wins!';
+                talk.innerText = trashTalkTemplates.battle.v2Win[Math.floor(Math.random() * 2)];
+                c2.classList.add('winner'); c1.classList.add('loser');
+                historyText = `Battle: V2(${v2Stats.score}) beat V1(${v1Stats.score})`;
+            } else {
+                banner.innerText = '🤝 It\'s a Tie!';
+                talk.innerText = trashTalkTemplates.battle.tie[0];
+                historyText = `Battle: V1 and V2 Tied at ${v1Stats.score}`;
+            }
+
+            banner.style.display = 'block';
+            talk.style.display = 'block';
+            btnResetBattle.style.display = 'block';
+            statusText.innerText = 'Battle Complete!';
+
+            // Save battle to directory
+            saveToDirectory(Math.max(v1Stats.score, v2Stats.score), historyText, 'Battle');
+        }
+
+        function resetBattleArena() {
+            v1Stats = null; v2Stats = null;
+            document.getElementById('score-v1').innerText = '--';
+            document.getElementById('score-v2').innerText = '--';
+            document.getElementById('class-v1').style.display = 'none';
+            document.getElementById('class-v2').style.display = 'none';
+            
+            document.getElementById('card-v1').classList.remove('winner', 'loser');
+            document.getElementById('card-v2').classList.remove('winner', 'loser');
+            document.getElementById('card-v1').classList.add('active-turn');
+            
+            document.getElementById('battle-winner').style.display = 'none';
+            document.getElementById('battle-trash-talk').style.display = 'none';
+            btnResetBattle.style.display = 'none';
+
+            btnV1.disabled = false; btnV1.innerHTML = '🎤 Record V1';
+            btnV2.disabled = true; btnV2.innerHTML = '🔒 Locked';
+            
+            statusText.innerText = 'New Battle Arena Ready. Record V1!';
+        }
+
+        // DIRECTORY LOGIC
+        const dirBtn = document.getElementById('dir-btn');
+        const directory = document.getElementById('directory');
+        const historyList = document.getElementById('history-list');
+
+        dirBtn.addEventListener('click', () => {
+            directory.style.display = directory.style.display === 'block' ? 'none' : 'block';
+            renderDirectory();
+        });
+
+        document.getElementById('clear-dir').addEventListener('click', () => {
+            localStorage.removeItem('roarDirectory');
+            historyData = [];
+            renderDirectory();
+        });
+
+        function saveToDirectory(score, detail, type) {
             const date = new Date().toLocaleString();
-            historyData.unshift({ score, bike, date }); // Add to top of list
-            if(historyData.length > 10) historyData.pop(); // Keep only last 10
+            historyData.unshift({ score, detail, type, date });
+            if(historyData.length > 15) historyData.pop(); 
             
             localStorage.setItem('roarDirectory', JSON.stringify(historyData));
             if(directory.style.display === 'block') renderDirectory();
@@ -299,11 +473,10 @@
                 historyList.innerHTML = "<p style='color:#777;'>Garage is empty. Rev to fill it!</p>";
                 return;
             }
-
             historyList.innerHTML = historyData.map(item => `
-                <div class="history-item">
+                <div class="history-item ${item.type === 'Battle' ? 'battle-hist' : ''}">
                     <div class="h-details">
-                        <div style="font-weight:bold; color:white;">${item.bike}</div>
+                        <div style="font-weight:bold; color:${item.type === 'Battle' ? 'var(--battle)' : 'white'};">${item.detail}</div>
                         <div class="h-date">${item.date}</div>
                     </div>
                     <div class="h-score">${item.score}</div>
