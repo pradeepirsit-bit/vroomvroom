@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bike Roar Rater - TFJS On-Device</title>
+    
+    <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <!-- Load Teachable Machine Audio Extension (Handles complex FFT/Spectrogram math automatically) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff4500;
+            --secondary: #222;
+            --bg: #0a0a0a;
+            --text: #ffffff;
+            --accent: #00ff7f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background-color: var(--secondary);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(255, 69, 0, 0.15);
+            width: 90%;
+            max-width: 450px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Top highlight bar */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        h1 { margin-top: 0; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
+        p { color: #aaaaaa; font-size: 0.95rem; margin-bottom: 25px; }
+
+        #record-btn {
+            background: linear-gradient(145deg, #ff5722, #e63e00);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 90px; height: 90px;
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(255, 69, 0, 0.4);
+            margin: 10px auto 25px auto;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #record-btn:active { transform: scale(0.9); }
+        
+        #record-btn.recording {
+            background: #dc143c;
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.7); }
+            70% { box-shadow: 0 0 0 25px rgba(220, 20, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0); }
+        }
+
+        /* Progress Bar for the 5s capture */
+        .progress-container { width: 100%; height: 6px; background: #333; border-radius: 3px; margin-bottom: 15px; display: none; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; background: var(--primary); transition: width 0.1s linear; }
+
+        .results { display: none; animation: slideUp 0.5s ease-out forwards; border-top: 1px solid #333; padding-top: 20px; }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .score-box { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .score-display { font-size: 4rem; font-weight: 900; color: var(--accent); margin: 0; line-height: 1; text-shadow: 0 0 15px rgba(0,255,127,0.3); }
+        .bonus-text { font-size: 0.8rem; color: #ffeb3b; margin-top: 5px; }
+
+        .bike-badge {
+            display: inline-block; padding: 6px 12px; border-radius: 6px;
+            background: #333; font-weight: bold; font-size: 1.1rem; margin: 10px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .trash-talk {
+            font-size: 1.1rem; font-style: italic; background: rgba(255,255,255,0.05);
+            padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #444;
+        }
+
+        #status { color: #888; font-size: 0.9rem; font-weight: 500; height: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Roar Rater</h1>
+        <p>100% On-Device AI Architecture</p>
+        
+        <button id="record-btn">🎤</button>
+        
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        
+        <div id="status">Tap mic to load AI and record</div>
+
+        <div class="results" id="results-card">
+            <div class="score-box">
+                <div style="font-size: 0.9rem; color:#aaa; text-transform:uppercase; letter-spacing:1px;">Final Roar Score</div>
+                <div class="score-display" id="roar-score">0</div>
+                <div class="bonus-text" id="bonus-text">+0 Character Bonus</div>
+            </div>
+            
+            <div><span class="bike-badge" id="bike-class">Analyzing...</span></div>
+            <div class="trash-talk" id="trash-talk-text"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION ---
+        // REPLACE this URL with your own Teachable Machine Audio model link once you train it!
+        // Example: "https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/"
+        const URL = "https://teachablemachine.withgoogle.com/models/placeholder/"; 
+        
+        const RECORD_DURATION_MS = 5000; // 5 seconds
+        
+        // Trash Talk Engine (Tamil-English)
+        const trashTalkTemplates = {
+            low: [
+                "Enna ba, mixer grinder sound kekuthu! 😂",
+                "TVS 50 ah idhu? Needs more throat! 🛵",
+                "Sathame illa... Cycle otlama ba? 🚲"
+            ],
+            medium: [
+                "Not bad, aana innum konjam raw power thevai! 🏍️",
+                "Decent ah irukku, but where is the bass man? 🤔",
+                "KTM Duke vibes, pulling out okay! 🔥"
+            ],
+            high: [
+                "Verithanam! Pure muscle! 💥",
+                "Therikkavidalama! That's a beast roaring! 🦁",
+                "Kaantha kural! Royal Enfield thozha! 👑"
+            ]
+        };
+
+        // UI Elements
+        const recordBtn = document.getElementById('record-btn');
+        const statusText = document.getElementById('status');
+        const resultsCard = document.getElementById('results-card');
+        const roarScoreEl = document.getElementById('roar-score');
+        const bikeClassEl = document.getElementById('bike-class');
+        const trashTalkEl = document.getElementById('trash-talk-text');
+        const bonusTextEl = document.getElementById('bonus-text');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+
+        // State Variables
+        let isRecording = false;
+        let recognizer;
+        let audioContext;
+        let analyser;
+        let microphone;
+        let maxVolume = 0;
+        let detectedClass = "Unknown";
+        let maxConfidence = 0;
+        let progressInterval;
+
+        // --- 2. TFJS MODEL LOADING ---
+        async function createModel() {
+            const checkpointURL = URL + "model.json"; // model topology
+            const metadataURL = URL + "metadata.json"; // model metadata
+
+            try {
+                const recognizer = speechCommands.create(
+                    "BROWSER_FFT", // Fourier transform type
+                    undefined,     // speech commands vocabulary feature
+                    checkpointURL,
+                    metadataURL
+                );
+                // check that model and metadata are loaded
+                await recognizer.ensureModelLoaded();
+                return recognizer;
+            } catch (e) {
+                console.warn("Real TFJS model not found. Falling back to Mock Engine for UI testing.");
+                return null; // Return null to trigger the graceful fallback demo
+            }
+        }
+
+        // --- 3. CORE LOGIC ---
+        recordBtn.addEventListener('click', async () => {
+            if (isRecording) return;
+            
+            resultsCard.style.display = 'none';
+            statusText.innerText = 'Loading TFJS Model into memory...';
+            
+            // Lazy load model on first click
+            if (!recognizer && recognizer !== null) {
+                recognizer = await createModel();
+            }
+
+            startPipeline();
+        });
+
+        async function startPipeline() {
+            try {
+                // Request raw microphone access for decibel calculation
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                setupDecibelTracker(stream);
+
+                isRecording = true;
+                recordBtn.classList.add('recording');
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                statusText.innerText = 'Listening... Rev the engine!';
+
+                // Start Progress Bar
+                let elapsed = 0;
+                progressInterval = setInterval(() => {
+                    elapsed += 100;
+                    progressBar.style.width = (elapsed / RECORD_DURATION_MS) * 100 + '%';
+                }, 100);
+
+                // If real TFJS model loaded, start classifying in real time
+                if (recognizer) {
+                    const classLabels = recognizer.wordLabels(); 
+                    recognizer.listen(result => {
+                        // Find highest confidence class during this window
+                        let scores = result.scores;
+                        let highestIndex = scores.indexOf(Math.max(...scores));
+                        
+                        if (scores[highestIndex] > maxConfidence) {
+                            maxConfidence = scores[highestIndex];
+                            detectedClass = classLabels[highestIndex];
+                        }
+                    }, {
+                        includeSpectrogram: false,
+                        probabilityThreshold: 0.75,
+                        invokeCallbackOnNoiseAndUnknown: true,
+                        overlapFactor: 0.50
+                    });
+                }
+
+                // Stop after 5 seconds
+                setTimeout(() => {
+                    stopPipeline(stream);
+                }, RECORD_DURATION_MS);
+
+            } catch (err) {
+                console.error(err);
+                statusText.innerText = "Error: Microphone permission denied.";
+            }
+        }
+
+        function setupDecibelTracker(stream) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            analyser.fftSize = 256;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            maxVolume = 0;
+
+            function track() {
+                if (!isRecording) return;
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) { sum += dataArray[i]; }
+                let avg = sum / bufferLength;
+                if (avg > maxVolume) maxVolume = avg; // Track peak volume
+                requestAnimationFrame(track);
+            }
+            track();
+        }
+
+        function stopPipeline(stream) {
+            isRecording = false;
+            clearInterval(progressInterval);
+            recordBtn.classList.remove('recording');
+            progressContainer.style.display = 'none';
+            statusText.innerText = 'Processing completely on-device...';
+
+            // Clean up Audio Context
+            stream.getTracks().forEach(track => track.stop());
+            if (audioContext && audioContext.state !== 'closed') {
+                audioContext.close();
+            }
+            if (recognizer) {
+                recognizer.stopListening();
+            }
+
+            calculateAndShowResults();
+        }
+
+        function calculateAndShowResults() {
+            // 1. Calculate Base Decibel Score (Mapping peak volume 0-255 to 0-85)
+            let baseScore = Math.min(85, Math.round((maxVolume / 255) * 85 * 1.5)); 
+            if (baseScore < 10) baseScore = Math.floor(Math.random() * 20) + 10; 
+
+            // 2. Handle AI Bike Classification & Character Bonus
+            let characterBonus = 0;
+
+            // If the user hasn't put in their real Teachable Machine URL yet, Mock the AI
+            if (!recognizer) {
+                if (baseScore > 75) { detectedClass = "Royal Enfield Classic 350"; maxConfidence = 0.92; }
+                else if (baseScore > 50) { detectedClass = "KTM Duke 390"; maxConfidence = 0.85; }
+                else { detectedClass = "TVS XL Super"; maxConfidence = 0.78; }
+            }
+
+            // Assign Bonus based on AI Output (The "Character" Bonus from your architecture)
+            if (detectedClass.includes("Royal Enfield")) characterBonus = 15;
+            else if (detectedClass.includes("KTM")) characterBonus = 10;
+            else if (detectedClass.includes("Yamaha")) characterBonus = 8;
+            else characterBonus = 2; // Commuter bikes get low bonus
+
+            // 3. Final Roar Score Calculation
+            let finalScore = Math.min(100, baseScore + characterBonus);
+
+            // 4. Update UI
+            roarScoreEl.innerText = finalScore;
+            bonusTextEl.innerText = `+${characterBonus} Character Bonus (${detectedClass})`;
+            bikeClassEl.innerText = `${detectedClass} (Confidence: ${Math.round(maxConfidence * 100)}%)`;
+            
+            // 5. Fire Trash Talk Engine
+            let category = 'low';
+            if (finalScore > 75) category = 'high';
+            else if (finalScore > 40) category = 'medium';
+
+            const phrases = trashTalkTemplates[category];
+            trashTalkEl.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+
+            resultsCard.style.display = 'block';
+            statusText.innerText = 'Tap mic to test another bike!';
+            
+            // Reset state for next run
+            maxConfidence = 0;
+            detectedClass = "Unknown";
+        }
+    </script>
+</body>
+</html>
