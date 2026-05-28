@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>vroomvroom - The Ultimate Exhaust Test</title>
     
-    <!-- Load TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-    <!-- Load Teachable Machine Audio Extension -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
 
     <style>
@@ -17,6 +15,7 @@
             --bg: #050505;
             --text: #ffffff;
             --accent: #00ff7f;
+            --battle: #00bfff;
         }
 
         body {
@@ -26,109 +25,81 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
             margin: 0;
             text-align: center;
+            padding: 20px 0;
         }
 
         .container {
             background-color: var(--secondary);
-            padding: 2.5rem 2rem;
+            padding: 2rem 1.5rem;
             border-radius: 20px;
             box-shadow: 0 15px 40px rgba(255, 69, 0, 0.15);
             width: 90%;
-            max-width: 450px;
+            max-width: 500px;
             position: relative;
             overflow: hidden;
             border: 1px solid #333;
+            margin-bottom: 20px;
         }
 
-        /* Top highlight bar */
         .container::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 5px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
+            background: linear-gradient(90deg, var(--primary), var(--battle), var(--accent));
         }
 
-        h1 { 
-            margin-top: 0; 
-            margin-bottom: 5px;
-            color: var(--primary); 
-            font-size: 2.5rem;
-            font-weight: 900;
-            font-style: italic;
-            letter-spacing: -1px; 
-        }
+        h1 { margin: 0 0 5px 0; color: var(--primary); font-size: 2.5rem; font-weight: 900; font-style: italic; letter-spacing: -1px; }
+        .tagline { color: #aaaaaa; font-size: 1.05rem; font-weight: 600; margin-bottom: 20px; }
+
+        .mode-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
         
-        .tagline { 
-            color: #aaaaaa; 
-            font-size: 1.05rem; 
-            font-weight: 600;
-            margin-bottom: 30px; 
+        button {
+            border: none; border-radius: 50px; padding: 12px 20px;
+            font-size: 1rem; font-weight: bold; cursor: pointer;
+            transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;
         }
 
-        #record-btn {
-            background: linear-gradient(145deg, #ff5722, #e63e00);
-            color: white;
-            border: none;
-            border-radius: 50px; /* Pill shape for text */
-            padding: 18px 35px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(255, 69, 0, 0.4);
-            margin: 10px auto 25px auto;
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center;
-            gap: 10px;
-        }
+        #single-btn { background: linear-gradient(145deg, #ff5722, #e63e00); color: white; box-shadow: 0 8px 20px rgba(255, 69, 0, 0.4); }
+        #battle-btn { background: linear-gradient(145deg, #009ce6, #0077b3); color: white; box-shadow: 0 8px 20px rgba(0, 191, 255, 0.4); }
+        #dir-btn { background: #333; color: white; margin-top: 10px; border: 1px solid #555; }
 
-        #record-btn:active { transform: scale(0.95); }
+        button:active { transform: scale(0.95); }
+        button.recording { background: #dc143c !important; pointer-events: none; animation: pulse 1s infinite alternate; }
+
+        @keyframes pulse { from { opacity: 1; } to { opacity: 0.7; } }
+
+        /* LIVE RPM BOOST METER */
+        .boost-container { display: none; width: 100%; margin-top: 15px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; border: 1px solid #333; box-sizing: border-box; }
+        .boost-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 2px; }
+        .boost-bar-bg { width: 100%; height: 25px; background: #222; border-radius: 12px; overflow: hidden; position: relative; }
+        .boost-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff7f, #ffeb3b, #ff4500); transition: width 0.05s ease-out; }
         
-        #record-btn.recording {
-            background: #dc143c;
-            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        }
+        .progress-container { width: 100%; height: 4px; background: #222; margin-top: 10px; border-radius: 2px; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; background: #fff; transition: width 0.1s linear; }
 
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.7); }
-            70% { box-shadow: 0 0 0 25px rgba(220, 20, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0); }
-        }
-
-        /* Progress Bar for the 10s capture */
-        .progress-container { width: 100%; height: 8px; background: #222; border-radius: 4px; margin-bottom: 15px; display: none; overflow: hidden; }
-        .progress-bar { height: 100%; width: 0%; background: var(--primary); transition: width 0.1s linear; }
-
-        .results { display: none; animation: slideUp 0.5s ease-out forwards; border-top: 1px solid #333; padding-top: 20px; }
+        .results { display: none; animation: slideUp 0.5s ease-out forwards; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px;}
         
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .score-box { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333;}
-        .score-display { font-size: 4.5rem; font-weight: 900; color: var(--accent); margin: 5px 0; line-height: 1; text-shadow: 0 0 20px rgba(0,255,127,0.4); }
-        .bonus-text { font-size: 0.9rem; color: #ffeb3b; font-weight: bold; }
+        .score-box { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 15px; border: 1px solid #333;}
+        .score-display { font-size: 4rem; font-weight: 900; color: var(--accent); margin: 5px 0; line-height: 1; text-shadow: 0 0 20px rgba(0,255,127,0.4); }
+        
+        .bike-badge { display: inline-block; padding: 6px 12px; border-radius: 8px; background: #222; font-weight: bold; margin: 10px 0; border-left: 4px solid var(--primary); }
+        .trash-talk { font-size: 1.1rem; font-style: italic; background: rgba(255,69,0,0.1); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--primary); color: #fff; }
 
-        .bike-badge {
-            display: inline-block; padding: 8px 16px; border-radius: 8px;
-            background: #222; font-weight: bold; font-size: 1.1rem; margin: 10px 0;
-            border-left: 4px solid var(--primary);
-        }
+        /* DIRECTORY (GARAGE) STYLES */
+        .directory-container { display: none; width: 90%; max-width: 500px; background: var(--secondary); padding: 1.5rem; border-radius: 20px; border: 1px solid #333; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--primary); }
+        .h-score { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+        .h-details { text-align: left; font-size: 0.9rem; color: #ccc; }
+        .h-date { font-size: 0.7rem; color: #777; }
+        #clear-dir { background: transparent; color: #ff4500; font-size: 0.8rem; border: 1px solid #ff4500; padding: 5px 10px; margin-top: 10px;}
 
-        .trash-talk {
-            font-size: 1.2rem; font-style: italic; background: rgba(255,69,0,0.1);
-            padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--primary);
-            color: #fff; font-weight: 500;
-        }
-
-        #status { color: #888; font-size: 0.95rem; font-weight: 500; height: 20px; margin-bottom: 10px;}
+        #status { color: #888; font-size: 0.95rem; font-weight: 500; height: 20px; margin-bottom: 5px;}
     </style>
 </head>
 <body>
@@ -137,157 +108,116 @@
         <h1>vroomvroom</h1>
         <p class="tagline">Engine sound-ா? Mixer grinder sound-ா?</p>
         
-        <button id="record-btn">🎤 Tap to Rev, Maapla!</button>
-        
-        <div class="progress-container" id="progress-container">
-            <div class="progress-bar" id="progress-bar"></div>
+        <div class="mode-buttons">
+            <button id="single-btn">🎤 Solo Rev</button>
+            <button id="battle-btn">⚔️ 1v1 Battle</button>
         </div>
-        
-        <div id="status">Loads AI on device. Zero data sent to cloud.</div>
 
-        <div class="results" id="results-card">
-            <div class="score-box">
-                <div style="font-size: 0.9rem; color:#aaa; text-transform:uppercase; letter-spacing:2px;">Final Roar Score</div>
-                <div class="score-display" id="roar-score">0</div>
-                <div class="bonus-text" id="bonus-text">+0 Character Bonus</div>
+        <div id="status">Ready to test.</div>
+
+        <!-- LIVE BOOST VISUALIZER -->
+        <div class="boost-container" id="boost-container">
+            <div class="boost-label">Exhaust Boost Level 🚀</div>
+            <div class="boost-bar-bg">
+                <div class="boost-bar-fill" id="boost-fill"></div>
             </div>
-            
-            <div><span class="bike-badge" id="bike-class">Analyzing...</span></div>
-            <div class="trash-talk" id="trash-talk-text"></div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Solo Results -->
+        <div class="results" id="single-results-card">
+            <div class="score-box">
+                <div style="font-size: 0.85rem; color:#aaa; text-transform:uppercase;">Final Roar Score</div>
+                <div class="score-display" id="solo-score">0</div>
+            </div>
+            <div><span class="bike-badge" id="solo-class">Analyzing...</span></div>
+            <div class="trash-talk" id="solo-trash-talk"></div>
         </div>
     </div>
 
+    <button id="dir-btn">📂 Open Roar Directory</button>
+
+    <!-- DIRECTORY OF ROAR -->
+    <div class="directory-container" id="directory">
+        <h2 style="color:var(--primary); margin-top:0;">Garage History</h2>
+        <div id="history-list"></div>
+        <button id="clear-dir">Clear History</button>
+    </div>
+
     <script>
-        // --- 1. CONFIGURATION ---
-        // REPLACE this URL with your own Teachable Machine Audio model link once you train it!
         const URL = "https://teachablemachine.withgoogle.com/models/placeholder/"; 
-        
-        // INCREASED LISTENING PERIOD: Now set to 10 seconds (10000 ms)
         const RECORD_DURATION_MS = 10000; 
-        
-        // Trash Talk Engine (Tamil-English / Tanglish)
+
         const trashTalkTemplates = {
-            low: [
-                "Enna ba, mixer grinder sound kekuthu! 😂",
-                "TVS 50 ah idhu? Needs more throat, Maapla! 🛵",
-                "Sathame illa... Cycle otlama ba? 🚲"
-            ],
-            medium: [
-                "Not bad, aana innum konjam raw power thevai! 🏍️",
-                "Decent ah irukku, but where is the bass man? 🤔",
-                "KTM Duke vibes, pulling out okay! 🔥"
-            ],
-            high: [
-                "Verithanam! Pure muscle! 💥",
-                "Therikkavidalama! That's a beast roaring! 🦁",
-                "Kaantha kural! Pakka Royal Enfield thozha! 👑"
-            ]
+            low: ["Enna ba, mixer grinder sound! 😂", "Cycle otlama ba? 🚲"],
+            medium: ["Not bad, innum raw power thevai! 🏍️", "Pulling out okay! 🔥"],
+            high: ["Verithanam! Pure muscle! 💥", "Therikkavidalama! 🦁"]
         };
 
-        // UI Elements
-        const recordBtn = document.getElementById('record-btn');
+        const singleBtn = document.getElementById('single-btn');
+        const battleBtn = document.getElementById('battle-btn');
+        const dirBtn = document.getElementById('dir-btn');
+        const directory = document.getElementById('directory');
+        const historyList = document.getElementById('history-list');
+        const clearDirBtn = document.getElementById('clear-dir');
+
         const statusText = document.getElementById('status');
-        const resultsCard = document.getElementById('results-card');
-        const roarScoreEl = document.getElementById('roar-score');
-        const bikeClassEl = document.getElementById('bike-class');
-        const trashTalkEl = document.getElementById('trash-talk-text');
-        const bonusTextEl = document.getElementById('bonus-text');
-        const progressContainer = document.getElementById('progress-container');
+        const boostContainer = document.getElementById('boost-container');
+        const boostFill = document.getElementById('boost-fill');
         const progressBar = document.getElementById('progress-bar');
+        
+        const singleResultsCard = document.getElementById('single-results-card');
+        const soloScoreEl = document.getElementById('solo-score');
+        const soloClassEl = document.getElementById('solo-class');
+        const soloTrashTalkEl = document.getElementById('solo-trash-talk');
 
-        // State Variables
         let isRecording = false;
-        let recognizer;
-        let audioContext;
-        let analyser;
-        let microphone;
+        let audioContext, analyser, microphone, progressInterval;
         let maxVolume = 0;
-        let detectedClass = "Unknown";
-        let maxConfidence = 0;
-        let progressInterval;
+        let historyData = JSON.parse(localStorage.getItem('roarDirectory')) || [];
 
-        // --- 2. TFJS MODEL LOADING ---
-        async function createModel() {
-            const checkpointURL = URL + "model.json"; 
-            const metadataURL = URL + "metadata.json"; 
+        // UI Event Listeners
+        singleBtn.addEventListener('click', () => startPipeline());
+        
+        dirBtn.addEventListener('click', () => {
+            directory.style.display = directory.style.display === 'block' ? 'none' : 'block';
+            renderDirectory();
+        });
 
-            try {
-                const recognizer = speechCommands.create(
-                    "BROWSER_FFT", 
-                    undefined,     
-                    checkpointURL,
-                    metadataURL
-                );
-                await recognizer.ensureModelLoaded();
-                return recognizer;
-            } catch (e) {
-                console.warn("Real TFJS model not found. Falling back to Mock Engine for UI testing.");
-                return null; 
-            }
-        }
-
-        // --- 3. CORE LOGIC ---
-        recordBtn.addEventListener('click', async () => {
-            if (isRecording) return;
-            
-            resultsCard.style.display = 'none';
-            statusText.innerText = 'Warming up the engine... (Loading AI)';
-            recordBtn.innerHTML = '⏳ Loading...';
-            
-            // Lazy load model on first click
-            if (!recognizer && recognizer !== null) {
-                recognizer = await createModel();
-            }
-
-            startPipeline();
+        clearDirBtn.addEventListener('click', () => {
+            localStorage.removeItem('roarDirectory');
+            historyData = [];
+            renderDirectory();
         });
 
         async function startPipeline() {
+            if (isRecording) return;
+            
+            singleResultsCard.style.display = 'none';
+            statusText.innerText = 'Connecting mic...';
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 setupDecibelTracker(stream);
 
                 isRecording = true;
-                recordBtn.classList.add('recording');
-                recordBtn.innerHTML = '🔥 Listening (10s)...';
-                progressContainer.style.display = 'block';
-                progressBar.style.width = '0%';
+                boostContainer.style.display = 'block';
+                singleBtn.classList.add('recording');
+                singleBtn.innerHTML = '🔥 Listening...';
                 statusText.innerText = 'Give it a solid rev, Maapla!';
 
-                // Start Progress Bar over the new 10-second period
                 let elapsed = 0;
                 progressInterval = setInterval(() => {
                     elapsed += 100;
                     progressBar.style.width = (elapsed / RECORD_DURATION_MS) * 100 + '%';
                 }, 100);
 
-                if (recognizer) {
-                    const classLabels = recognizer.wordLabels(); 
-                    recognizer.listen(result => {
-                        let scores = result.scores;
-                        let highestIndex = scores.indexOf(Math.max(...scores));
-                        
-                        if (scores[highestIndex] > maxConfidence) {
-                            maxConfidence = scores[highestIndex];
-                            detectedClass = classLabels[highestIndex];
-                        }
-                    }, {
-                        includeSpectrogram: false,
-                        probabilityThreshold: 0.75,
-                        invokeCallbackOnNoiseAndUnknown: true,
-                        overlapFactor: 0.50
-                    });
-                }
-
-                // Stop after 10 seconds
-                setTimeout(() => {
-                    stopPipeline(stream);
-                }, RECORD_DURATION_MS);
+                setTimeout(() => stopPipeline(stream), RECORD_DURATION_MS);
 
             } catch (err) {
-                console.error(err);
-                statusText.innerText = "Error: Microphone permission denied.";
-                recordBtn.innerHTML = '🎤 Tap to Rev, Maapla!';
+                statusText.innerText = "Error: Mic permission denied!";
             }
         }
 
@@ -308,7 +238,14 @@
                 let sum = 0;
                 for (let i = 0; i < bufferLength; i++) { sum += dataArray[i]; }
                 let avg = sum / bufferLength;
-                if (avg > maxVolume) maxVolume = avg; // Track peak volume
+                
+                if (avg > maxVolume) maxVolume = avg; 
+
+                // ANIMATE THE BOOST METER
+                // Map average volume (usually 0 to 150 realistically) to a percentage
+                let visualBoost = Math.min(100, (avg / 120) * 100);
+                boostFill.style.width = visualBoost + '%';
+
                 requestAnimationFrame(track);
             }
             track();
@@ -317,63 +254,61 @@
         function stopPipeline(stream) {
             isRecording = false;
             clearInterval(progressInterval);
-            recordBtn.classList.remove('recording');
-            recordBtn.innerHTML = '🎤 Test Another Bike';
-            progressContainer.style.display = 'none';
-            statusText.innerText = 'Calculating your Roar Score...';
+            singleBtn.classList.remove('recording');
+            singleBtn.innerHTML = '🎤 Solo Rev';
+            boostContainer.style.display = 'none';
 
             stream.getTracks().forEach(track => track.stop());
-            if (audioContext && audioContext.state !== 'closed') {
-                audioContext.close();
-            }
-            if (recognizer) {
-                recognizer.stopListening();
-            }
+            if (audioContext && audioContext.state !== 'closed') audioContext.close();
 
-            calculateAndShowResults();
+            processRawData();
         }
 
-        function calculateAndShowResults() {
-            // 1. Calculate Base Decibel Score
+        function processRawData() {
             let baseScore = Math.min(85, Math.round((maxVolume / 255) * 85 * 1.5)); 
             if (baseScore < 10) baseScore = Math.floor(Math.random() * 20) + 10; 
 
-            // 2. Handle AI Bike Classification
-            let characterBonus = 0;
+            // Mock AI Bike Detection
+            let detectedClass = baseScore > 75 ? "Royal Enfield" : (baseScore > 50 ? "KTM Duke" : "TVS XL");
+            let bonus = detectedClass === "Royal Enfield" ? 15 : (detectedClass === "KTM Duke" ? 10 : 2);
+            let finalScore = Math.min(100, baseScore + bonus);
 
-            if (!recognizer) {
-                if (baseScore > 75) { detectedClass = "Royal Enfield Classic 350"; maxConfidence = 0.92; }
-                else if (baseScore > 50) { detectedClass = "KTM Duke 390"; maxConfidence = 0.85; }
-                else { detectedClass = "TVS XL Super"; maxConfidence = 0.78; }
+            soloScoreEl.innerText = finalScore;
+            soloClassEl.innerText = `${detectedClass} (+${bonus} Bonus)`;
+            
+            let category = finalScore > 75 ? 'high' : (finalScore > 40 ? 'medium' : 'low');
+            soloTrashTalkEl.innerText = trashTalkTemplates[category][Math.floor(Math.random() * trashTalkTemplates[category].length)];
+
+            singleResultsCard.style.display = 'block';
+            statusText.innerText = 'Score calculated!';
+
+            saveToDirectory(finalScore, detectedClass);
+        }
+
+        function saveToDirectory(score, bike) {
+            const date = new Date().toLocaleString();
+            historyData.unshift({ score, bike, date }); // Add to top of list
+            if(historyData.length > 10) historyData.pop(); // Keep only last 10
+            
+            localStorage.setItem('roarDirectory', JSON.stringify(historyData));
+            if(directory.style.display === 'block') renderDirectory();
+        }
+
+        function renderDirectory() {
+            if (historyData.length === 0) {
+                historyList.innerHTML = "<p style='color:#777;'>Garage is empty. Rev to fill it!</p>";
+                return;
             }
 
-            // Character Bonus Assignment
-            if (detectedClass.includes("Royal Enfield")) characterBonus = 15;
-            else if (detectedClass.includes("KTM")) characterBonus = 10;
-            else if (detectedClass.includes("Yamaha")) characterBonus = 8;
-            else characterBonus = 2; 
-
-            // 3. Final Roar Score
-            let finalScore = Math.min(100, baseScore + characterBonus);
-
-            // 4. Update UI
-            roarScoreEl.innerText = finalScore;
-            bonusTextEl.innerText = `+${characterBonus} Character Bonus (${detectedClass})`;
-            bikeClassEl.innerText = `${detectedClass} (Confidence: ${Math.round(maxConfidence * 100)}%)`;
-            
-            // 5. Fire Trash Talk Engine
-            let category = 'low';
-            if (finalScore > 75) category = 'high';
-            else if (finalScore > 40) category = 'medium';
-
-            const phrases = trashTalkTemplates[category];
-            trashTalkEl.innerText = phrases[Math.floor(Math.random() * phrases.length)];
-
-            resultsCard.style.display = 'block';
-            statusText.innerText = 'Share your score to end the argument!';
-            
-            maxConfidence = 0;
-            detectedClass = "Unknown";
+            historyList.innerHTML = historyData.map(item => `
+                <div class="history-item">
+                    <div class="h-details">
+                        <div style="font-weight:bold; color:white;">${item.bike}</div>
+                        <div class="h-date">${item.date}</div>
+                    </div>
+                    <div class="h-score">${item.score}</div>
+                </div>
+            `).join('');
         }
     </script>
 </body>
