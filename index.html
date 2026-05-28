@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bike Roar Rater - TFJS On-Device</title>
+    <title>vroomvroom - The Ultimate Exhaust Test</title>
     
     <!-- Load TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-    <!-- Load Teachable Machine Audio Extension (Handles complex FFT/Spectrogram math automatically) -->
+    <!-- Load Teachable Machine Audio Extension -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
 
     <style>
         :root {
             --primary: #ff4500;
-            --secondary: #222;
-            --bg: #0a0a0a;
+            --secondary: #111111;
+            --bg: #050505;
             --text: #ffffff;
             --accent: #00ff7f;
         }
@@ -34,13 +34,14 @@
 
         .container {
             background-color: var(--secondary);
-            padding: 2.5rem;
+            padding: 2.5rem 2rem;
             border-radius: 20px;
             box-shadow: 0 15px 40px rgba(255, 69, 0, 0.15);
             width: 90%;
             max-width: 450px;
             position: relative;
             overflow: hidden;
+            border: 1px solid #333;
         }
 
         /* Top highlight bar */
@@ -52,24 +53,42 @@
             background: linear-gradient(90deg, var(--primary), var(--accent));
         }
 
-        h1 { margin-top: 0; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
-        p { color: #aaaaaa; font-size: 0.95rem; margin-bottom: 25px; }
+        h1 { 
+            margin-top: 0; 
+            margin-bottom: 5px;
+            color: var(--primary); 
+            font-size: 2.5rem;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -1px; 
+        }
+        
+        .tagline { 
+            color: #aaaaaa; 
+            font-size: 1.05rem; 
+            font-weight: 600;
+            margin-bottom: 30px; 
+        }
 
         #record-btn {
             background: linear-gradient(145deg, #ff5722, #e63e00);
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 90px; height: 90px;
-            font-size: 32px;
+            border-radius: 50px; /* Pill shape for text */
+            padding: 18px 35px;
+            font-size: 1.2rem;
+            font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 8px 20px rgba(255, 69, 0, 0.4);
             margin: 10px auto 25px auto;
-            display: flex; align-items: center; justify-content: center;
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 10px;
         }
 
-        #record-btn:active { transform: scale(0.9); }
+        #record-btn:active { transform: scale(0.95); }
         
         #record-btn.recording {
             background: #dc143c;
@@ -82,8 +101,8 @@
             100% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0); }
         }
 
-        /* Progress Bar for the 5s capture */
-        .progress-container { width: 100%; height: 6px; background: #333; border-radius: 3px; margin-bottom: 15px; display: none; overflow: hidden; }
+        /* Progress Bar for the 10s capture */
+        .progress-container { width: 100%; height: 8px; background: #222; border-radius: 4px; margin-bottom: 15px; display: none; overflow: hidden; }
         .progress-bar { height: 100%; width: 0%; background: var(--primary); transition: width 0.1s linear; }
 
         .results { display: none; animation: slideUp 0.5s ease-out forwards; border-top: 1px solid #333; padding-top: 20px; }
@@ -93,41 +112,42 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .score-box { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .score-display { font-size: 4rem; font-weight: 900; color: var(--accent); margin: 0; line-height: 1; text-shadow: 0 0 15px rgba(0,255,127,0.3); }
-        .bonus-text { font-size: 0.8rem; color: #ffeb3b; margin-top: 5px; }
+        .score-box { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333;}
+        .score-display { font-size: 4.5rem; font-weight: 900; color: var(--accent); margin: 5px 0; line-height: 1; text-shadow: 0 0 20px rgba(0,255,127,0.4); }
+        .bonus-text { font-size: 0.9rem; color: #ffeb3b; font-weight: bold; }
 
         .bike-badge {
-            display: inline-block; padding: 6px 12px; border-radius: 6px;
-            background: #333; font-weight: bold; font-size: 1.1rem; margin: 10px 0;
+            display: inline-block; padding: 8px 16px; border-radius: 8px;
+            background: #222; font-weight: bold; font-size: 1.1rem; margin: 10px 0;
             border-left: 4px solid var(--primary);
         }
 
         .trash-talk {
-            font-size: 1.1rem; font-style: italic; background: rgba(255,255,255,0.05);
-            padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #444;
+            font-size: 1.2rem; font-style: italic; background: rgba(255,69,0,0.1);
+            padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--primary);
+            color: #fff; font-weight: 500;
         }
 
-        #status { color: #888; font-size: 0.9rem; font-weight: 500; height: 20px; }
+        #status { color: #888; font-size: 0.95rem; font-weight: 500; height: 20px; margin-bottom: 10px;}
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Roar Rater</h1>
-        <p>100% On-Device AI Architecture</p>
+        <h1>vroomvroom</h1>
+        <p class="tagline">Engine sound-ா? Mixer grinder sound-ா?</p>
         
-        <button id="record-btn">🎤</button>
+        <button id="record-btn">🎤 Tap to Rev, Maapla!</button>
         
         <div class="progress-container" id="progress-container">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
         
-        <div id="status">Tap mic to load AI and record</div>
+        <div id="status">Loads AI on device. Zero data sent to cloud.</div>
 
         <div class="results" id="results-card">
             <div class="score-box">
-                <div style="font-size: 0.9rem; color:#aaa; text-transform:uppercase; letter-spacing:1px;">Final Roar Score</div>
+                <div style="font-size: 0.9rem; color:#aaa; text-transform:uppercase; letter-spacing:2px;">Final Roar Score</div>
                 <div class="score-display" id="roar-score">0</div>
                 <div class="bonus-text" id="bonus-text">+0 Character Bonus</div>
             </div>
@@ -140,16 +160,16 @@
     <script>
         // --- 1. CONFIGURATION ---
         // REPLACE this URL with your own Teachable Machine Audio model link once you train it!
-        // Example: "https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/"
         const URL = "https://teachablemachine.withgoogle.com/models/placeholder/"; 
         
-        const RECORD_DURATION_MS = 5000; // 5 seconds
+        // INCREASED LISTENING PERIOD: Now set to 10 seconds (10000 ms)
+        const RECORD_DURATION_MS = 10000; 
         
-        // Trash Talk Engine (Tamil-English)
+        // Trash Talk Engine (Tamil-English / Tanglish)
         const trashTalkTemplates = {
             low: [
                 "Enna ba, mixer grinder sound kekuthu! 😂",
-                "TVS 50 ah idhu? Needs more throat! 🛵",
+                "TVS 50 ah idhu? Needs more throat, Maapla! 🛵",
                 "Sathame illa... Cycle otlama ba? 🚲"
             ],
             medium: [
@@ -160,7 +180,7 @@
             high: [
                 "Verithanam! Pure muscle! 💥",
                 "Therikkavidalama! That's a beast roaring! 🦁",
-                "Kaantha kural! Royal Enfield thozha! 👑"
+                "Kaantha kural! Pakka Royal Enfield thozha! 👑"
             ]
         };
 
@@ -188,22 +208,21 @@
 
         // --- 2. TFJS MODEL LOADING ---
         async function createModel() {
-            const checkpointURL = URL + "model.json"; // model topology
-            const metadataURL = URL + "metadata.json"; // model metadata
+            const checkpointURL = URL + "model.json"; 
+            const metadataURL = URL + "metadata.json"; 
 
             try {
                 const recognizer = speechCommands.create(
-                    "BROWSER_FFT", // Fourier transform type
-                    undefined,     // speech commands vocabulary feature
+                    "BROWSER_FFT", 
+                    undefined,     
                     checkpointURL,
                     metadataURL
                 );
-                // check that model and metadata are loaded
                 await recognizer.ensureModelLoaded();
                 return recognizer;
             } catch (e) {
                 console.warn("Real TFJS model not found. Falling back to Mock Engine for UI testing.");
-                return null; // Return null to trigger the graceful fallback demo
+                return null; 
             }
         }
 
@@ -212,7 +231,8 @@
             if (isRecording) return;
             
             resultsCard.style.display = 'none';
-            statusText.innerText = 'Loading TFJS Model into memory...';
+            statusText.innerText = 'Warming up the engine... (Loading AI)';
+            recordBtn.innerHTML = '⏳ Loading...';
             
             // Lazy load model on first click
             if (!recognizer && recognizer !== null) {
@@ -224,28 +244,26 @@
 
         async function startPipeline() {
             try {
-                // Request raw microphone access for decibel calculation
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 setupDecibelTracker(stream);
 
                 isRecording = true;
                 recordBtn.classList.add('recording');
+                recordBtn.innerHTML = '🔥 Listening (10s)...';
                 progressContainer.style.display = 'block';
                 progressBar.style.width = '0%';
-                statusText.innerText = 'Listening... Rev the engine!';
+                statusText.innerText = 'Give it a solid rev, Maapla!';
 
-                // Start Progress Bar
+                // Start Progress Bar over the new 10-second period
                 let elapsed = 0;
                 progressInterval = setInterval(() => {
                     elapsed += 100;
                     progressBar.style.width = (elapsed / RECORD_DURATION_MS) * 100 + '%';
                 }, 100);
 
-                // If real TFJS model loaded, start classifying in real time
                 if (recognizer) {
                     const classLabels = recognizer.wordLabels(); 
                     recognizer.listen(result => {
-                        // Find highest confidence class during this window
                         let scores = result.scores;
                         let highestIndex = scores.indexOf(Math.max(...scores));
                         
@@ -261,7 +279,7 @@
                     });
                 }
 
-                // Stop after 5 seconds
+                // Stop after 10 seconds
                 setTimeout(() => {
                     stopPipeline(stream);
                 }, RECORD_DURATION_MS);
@@ -269,6 +287,7 @@
             } catch (err) {
                 console.error(err);
                 statusText.innerText = "Error: Microphone permission denied.";
+                recordBtn.innerHTML = '🎤 Tap to Rev, Maapla!';
             }
         }
 
@@ -299,10 +318,10 @@
             isRecording = false;
             clearInterval(progressInterval);
             recordBtn.classList.remove('recording');
+            recordBtn.innerHTML = '🎤 Test Another Bike';
             progressContainer.style.display = 'none';
-            statusText.innerText = 'Processing completely on-device...';
+            statusText.innerText = 'Calculating your Roar Score...';
 
-            // Clean up Audio Context
             stream.getTracks().forEach(track => track.stop());
             if (audioContext && audioContext.state !== 'closed') {
                 audioContext.close();
@@ -315,27 +334,26 @@
         }
 
         function calculateAndShowResults() {
-            // 1. Calculate Base Decibel Score (Mapping peak volume 0-255 to 0-85)
+            // 1. Calculate Base Decibel Score
             let baseScore = Math.min(85, Math.round((maxVolume / 255) * 85 * 1.5)); 
             if (baseScore < 10) baseScore = Math.floor(Math.random() * 20) + 10; 
 
-            // 2. Handle AI Bike Classification & Character Bonus
+            // 2. Handle AI Bike Classification
             let characterBonus = 0;
 
-            // If the user hasn't put in their real Teachable Machine URL yet, Mock the AI
             if (!recognizer) {
                 if (baseScore > 75) { detectedClass = "Royal Enfield Classic 350"; maxConfidence = 0.92; }
                 else if (baseScore > 50) { detectedClass = "KTM Duke 390"; maxConfidence = 0.85; }
                 else { detectedClass = "TVS XL Super"; maxConfidence = 0.78; }
             }
 
-            // Assign Bonus based on AI Output (The "Character" Bonus from your architecture)
+            // Character Bonus Assignment
             if (detectedClass.includes("Royal Enfield")) characterBonus = 15;
             else if (detectedClass.includes("KTM")) characterBonus = 10;
             else if (detectedClass.includes("Yamaha")) characterBonus = 8;
-            else characterBonus = 2; // Commuter bikes get low bonus
+            else characterBonus = 2; 
 
-            // 3. Final Roar Score Calculation
+            // 3. Final Roar Score
             let finalScore = Math.min(100, baseScore + characterBonus);
 
             // 4. Update UI
@@ -352,9 +370,8 @@
             trashTalkEl.innerText = phrases[Math.floor(Math.random() * phrases.length)];
 
             resultsCard.style.display = 'block';
-            statusText.innerText = 'Tap mic to test another bike!';
+            statusText.innerText = 'Share your score to end the argument!';
             
-            // Reset state for next run
             maxConfidence = 0;
             detectedClass = "Unknown";
         }
